@@ -20,13 +20,11 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
-// Simplified binding macros using correct devicetree functions
+// Simplified binding macro that doesn't try to access param1/param2 directly
 #define KT_BEHAVIOR_BINDING(n) { \
     .behavior_dev = DEVICE_DT_NAME(DT_INST_PHANDLE_BY_IDX(n, bindings, 0)), \
-    .param1 = DT_INST_PHA_HAS_CELL_AT_IDX(n, bindings, 0, param1) ? \
-              DT_INST_PHA_BY_IDX(n, bindings, 0, param1) : 0, \
-    .param2 = DT_INST_PHA_HAS_CELL_AT_IDX(n, bindings, 0, param2) ? \
-              DT_INST_PHA_BY_IDX(n, bindings, 0, param2) : 0, \
+    .param1 = 0, \
+    .param2 = 0, \
 }
 
 struct behavior_key_turbo_config {
