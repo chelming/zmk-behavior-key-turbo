@@ -46,6 +46,7 @@ struct behavior_key_turbo_data {
     struct k_work_delayable turbo_press_work;
     struct k_work_delayable turbo_release_work;
     uint32_t param;
+    const struct device *dev; // Store device pointer in the data structure
 };
 
 static void reset_turbo_key(struct behavior_key_turbo_data *data) {
@@ -67,8 +68,8 @@ static void turbo_release_work_handler(struct k_work *work) {
         return;
     }
 
-    // Fix: Use parent container to access device
-    const struct device *dev = k_work_delayable_from_work(work)->dev;
+    // Access device from data structure instead
+    const struct device *dev = data->dev;
     const struct behavior_key_turbo_config *config = dev->config;
     
     // Release using configured behavior
@@ -96,8 +97,8 @@ static void turbo_press_work_handler(struct k_work *work) {
         return;
     }
 
-    // Fix: Use parent container to access device
-    const struct device *dev = k_work_delayable_from_work(work)->dev;
+    // Access device from data structure instead
+    const struct device *dev = data->dev;
     const struct behavior_key_turbo_config *config = dev->config;
 
     // Press using configured behavior
@@ -187,10 +188,13 @@ static const struct behavior_driver_api behavior_key_turbo_driver_api = {
 static int behavior_key_turbo_init(const struct device *dev) {
     struct behavior_key_turbo_data *data = dev->data;
     
-    // Fix: Set device reference for work items
-    k_work_init_delayable_for_dev(&data->start_turbo_work, dev, start_turbo_work_handler);
-    k_work_init_delayable_for_dev(&data->turbo_press_work, dev, turbo_press_work_handler);
-    k_work_init_delayable_for_dev(&data->turbo_release_work, dev, turbo_release_work_handler);
+    // Store device pointer in data structure
+    data->dev = dev;
+    
+    // Initialize work items without using _for_dev function
+    k_work_init_delayable(&data->start_turbo_work, start_turbo_work_handler);
+    k_work_init_delayable(&data->turbo_press_work, turbo_press_work_handler);
+    k_work_init_delayable(&data->turbo_release_work, turbo_release_work_handler);
 
     return 0;
 }
