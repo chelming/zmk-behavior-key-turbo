@@ -1,0 +1,26 @@
+# Copyright (c) 2021 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+description: Key Turbo behavior
+
+compatible: "zmk,behavior-key-turbo"
+
+include: zero_param.yaml
+
+properties:
+  delay-ms:
+    type: int
+    required: true
+    description: Delay in milliseconds before starting the turbo
+  tempo-ms:
+    type: int
+    required: true
+    description: Overall cycle length in milliseconds
+  hold-ms:
+    type: int
+    required: true
+    description: How long the key should be held during each cycle
+  usage-pages:
+    type: array
+    required: true
+    description: HID usage pages to listen for
