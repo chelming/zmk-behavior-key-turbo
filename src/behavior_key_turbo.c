@@ -20,17 +20,14 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
-#define TURBO_BEHAVIOR_INST_BINDING(n, idx) \
-    { \
-        .behavior_dev = DEVICE_DT_NAME(DT_INST_PHANDLE_BY_IDX(n, bindings, idx)), \
-        .param1 = COND_CODE_0(DT_INST_PH_HAS_CELL_AT_IDX(n, bindings, idx, param1), (0), \
-                           (DT_INST_PH_GET_BY_IDX(n, bindings, idx, param1))), \
-        .param2 = COND_CODE_0(DT_INST_PH_HAS_CELL_AT_IDX(n, bindings, idx, param2), (0), \
-                           (DT_INST_PH_GET_BY_IDX(n, bindings, idx, param2))), \
-    },
-
-#define TURBO_BEHAVIOR_INST_BINDINGS(n, prop) \
-    { LISTIFY(DT_INST_PROP_LEN(n, prop), TURBO_BEHAVIOR_INST_BINDING, (, ), n) }
+// Simplified binding macros to avoid structure initialization issues
+#define KT_BEHAVIOR_BINDING(n) { \
+    .behavior_dev = DEVICE_DT_NAME(DT_INST_PHANDLE_BY_IDX(n, bindings, 0)), \
+    .param1 = DT_INST_PH_HAS_CELL_AT_IDX(n, bindings, 0, param1) ? \
+              DT_INST_PH_GET_BY_IDX(n, bindings, 0, param1) : 0, \
+    .param2 = DT_INST_PH_HAS_CELL_AT_IDX(n, bindings, 0, param2) ? \
+              DT_INST_PH_GET_BY_IDX(n, bindings, 0, param2) : 0, \
+}
 
 struct behavior_key_turbo_config {
     uint32_t tapping_term_ms;
@@ -199,17 +196,17 @@ static int behavior_key_turbo_init(const struct device *dev) {
     return 0;
 }
 
-#define KT_INST(n)                                                                              \
-    static struct behavior_key_turbo_data behavior_key_turbo_data_##n = {};                   \
-    static struct behavior_key_turbo_config behavior_key_turbo_config_##n = {                 \
-        .tapping_term_ms = DT_INST_PROP(n, tapping_term_ms),                                   \
-        .pause_ms = DT_INST_PROP(n, pause_ms),                                                 \
-        .press_ms = DT_INST_PROP(n, press_ms),                                                 \
-        .behavior = TURBO_BEHAVIOR_INST_BINDINGS(n, bindings)[0],                              \
-    };                                                                                          \
-    BEHAVIOR_DT_INST_DEFINE(n, behavior_key_turbo_init, NULL, &behavior_key_turbo_data_##n,  \
-                            &behavior_key_turbo_config_##n, POST_KERNEL,                       \
-                            CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, &behavior_key_turbo_driver_api);
+#define KT_INST(n)                                                                            \
+    static struct behavior_key_turbo_data behavior_key_turbo_data_##n = {0};                \
+    static struct behavior_key_turbo_config behavior_key_turbo_config_##n = {              \
+        .tapping_term_ms = DT_INST_PROP(n, tapping_term_ms),                                \
+        .pause_ms = DT_INST_PROP(n, pause_ms),                                              \
+        .press_ms = DT_INST_PROP(n, press_ms),                                              \
+        .behavior = KT_BEHAVIOR_BINDING(n),                                                 \
+    };                                                                                       \
+    BEHAVIOR_DT_INST_DEFINE(n, behavior_key_turbo_init, NULL, &behavior_key_turbo_data_##n, \
+                          &behavior_key_turbo_config_##n, POST_KERNEL,                      \
+                          CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, &behavior_key_turbo_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(KT_INST)
 
